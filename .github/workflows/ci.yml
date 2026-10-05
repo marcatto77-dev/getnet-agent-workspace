@@ -22,7 +22,7 @@ jobs:
       - run: ruff check backend/app backend/tests
       - run: bandit -q -r backend/app -lll
       - run: pip-audit -r backend/requirements.lock.txt
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: {node-version: '24', cache: npm, cache-dependency-path: frontend/package-lock.json}
       - run: npm ci && npm audit --audit-level=high && npm run build
         working-directory: frontend
