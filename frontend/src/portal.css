@@ -1,0 +1,24 @@
+.customer-nav{display:flex;flex-direction:row;align-items:center;gap:18px;font-size:10px;white-space:nowrap}
+.customer-nav a,.customer-nav button{color:#5f6570;text-decoration:none;border:0;background:none}
+.customer-nav strong{color:#202838}
+.portal-page{padding:38px max(6%,calc((100% - 1150px)/2));min-height:calc(100vh - 130px)}
+.portal-page>h1{font:700 28px Manrope}
+.machine-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.machine-cards article,.account-page section,.account-page form{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px}
+.machine-cards h2{font:700 20px Manrope}
+.machine-cards p{font-size:11px;color:#737986}
+.machine-cards a{display:inline-block;margin-top:14px;color:var(--red);font-size:10px}
+.terminal-status{display:inline-block;padding:5px 9px;border-radius:20px;background:#eee;font-size:9px}
+.terminal-status.online{background:#e7f8f1;color:#187a5b}
+.account-page{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.account-page>h1{grid-column:1/-1}
+.account-page label{display:block;font-size:10px;margin-top:12px}
+.account-page input{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;margin-top:5px}
+.account-page button{margin-top:15px;border:0;background:var(--red);color:#fff;padding:10px 16px;border-radius:8px}
+@media(max-width:700px){
+ .public-header{height:auto;min-height:60px;padding:10px 17px;gap:12px}
+ .customer-nav{gap:8px;flex-wrap:wrap;justify-content:flex-end;white-space:normal}
+ .customer-nav strong{width:100%;text-align:right}
+ .account-page{grid-template-columns:1fr}
+ .account-page>h1{grid-column:auto}
+}

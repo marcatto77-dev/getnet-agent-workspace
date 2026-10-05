@@ -1,0 +1,48 @@
+name: security-and-tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env: {POSTGRES_USER: getnet, POSTGRES_PASSWORD: ci-only-password, POSTGRES_DB: getnet_test}
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U getnet -d getnet_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12', cache: pip}
+      - run: pip install -r backend/requirements.lock.txt pip-audit bandit
+      - run: ruff check backend/app backend/tests
+      - run: bandit -q -r backend/app -lll
+      - run: pip-audit -r backend/requirements.lock.txt
+      - uses: actions/setup-node@v4
+        with: {node-version: '24', cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - run: npm ci && npm audit --audit-level=high && npm run build
+        working-directory: frontend
+      - uses: gitleaks/gitleaks-action@v2
+        env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
+      - run: cp .env.example .env
+      - run: docker compose build
+      - uses: aquasecurity/trivy-action@0.28.0
+        # Bloqueia falhas corrigíveis; CVEs sem pacote corrigido não podem ser resolvidas no Dockerfile.
+        with: {image-ref: 'getnet-api:latest', severity: 'HIGH,CRITICAL', ignore-unfixed: true, exit-code: '1'}
+      - run: pytest -q backend/tests
+        env:
+          PYTHONPATH: backend
+          TEST_DATABASE_URL: postgresql://getnet:ci-only-password@127.0.0.1:5432/getnet_test
+          RAG_AUTO_INGEST: 'false'
+      - run: docker compose up -d
+      - run: curl --fail --retry 15 --retry-delay 2 --retry-connrefused http://127.0.0.1:8080/
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8080

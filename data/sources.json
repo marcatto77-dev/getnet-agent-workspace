@@ -1,0 +1,98 @@
+[
+  {
+    "url": "https://www.getnet.net/en/",
+    "country": "GLOBAL",
+    "language": "en",
+    "topic": "institutional"
+  },
+  {
+    "url": "https://site.getnet.com.br/todas-as-maquininhas/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "machines"
+  },
+  {
+    "url": "https://site.getnet.com.br/link-de-pagamento/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "payment-link"
+  },
+  {
+    "url": "https://site.getnet.com.br/pix/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "pix"
+  },
+  {
+    "url": "https://site.getnet.com.br/crediario/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "crediario"
+  },
+  {
+    "url": "https://site.getnet.com.br/duvidas/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "faq"
+  },
+  {
+    "url": "https://site.getnet.com.br/get-ajuda-configuracoes/configuracoes-da-sua-maquininha/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "technical-support"
+  },
+  {
+    "url": "https://site.getnet.com.br/get-ajuda-maquininha/como-acessa-o-manual-da-sua-maquininha-getnet/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "manuals"
+  },
+  {
+    "url": "https://site.getnet.com.br/get-ajuda-antecipacao-de-venda/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "receivables"
+  },
+  {
+    "url": "https://site.getnet.com.br/produtos-fisicos/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "machine-specifications"
+  },
+  {
+    "url": "https://site.getnet.com.br/taxas/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "machine-features"
+  },
+  {
+    "url": "https://site.getnet.com.br/get-ajuda-maquininha/solucoes-get-smart/",
+    "country": "BR",
+    "language": "pt",
+    "topic": "smart-features"
+  },
+  {
+    "url": "https://site.getnet.com.br/wp-content/uploads/2025/09/Manul-GetSmart.pdf",
+    "country": "BR",
+    "language": "pt",
+    "topic": "manual-get-smart"
+  },
+  {
+    "url": "https://site.getnet.com.br/wp-content/uploads/2026/06/getnet_12_06-26_Manul_GetClassica_V2.pdf",
+    "country": "BR",
+    "language": "pt",
+    "topic": "manual-get-classica"
+  },
+  {
+    "url": "https://site.getnet.com.br/wp-content/uploads/2026/06/getnet_12_06-26_Manul_GetMini_V2.pdf",
+    "country": "BR",
+    "language": "pt",
+    "topic": "manual-get-mini"
+  },
+  {
+    "url": "https://site.getnet.com.br/wp-content/uploads/2026/07/getnet_19_06-26_Manul_GetLite_V4-1.pdf",
+    "country": "BR",
+    "language": "pt",
+    "topic": "manual-get-lite"
+  }
+]

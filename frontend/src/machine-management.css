@@ -1,0 +1,15 @@
+.machine-tools{display:flex;justify-content:flex-start;margin:12px 0 10px}
+.machine-tools input{width:min(100%,340px);border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px 12px;font-size:11px;outline-color:#e40046}
+.machine-management .admin-table table{min-width:920px}
+.machine-empty{text-align:center!important;color:#8c919d;padding:28px!important}
+.machine-modal{width:min(100%,520px)!important;max-height:min(92vh,800px);overflow:auto}
+.machine-modal .modal-eyebrow{font-size:9px;letter-spacing:1.3px;color:#8c919d}
+.machine-modal h2{margin:6px 0}
+.machine-modal .modal-description{font-size:11px;color:#747b88;line-height:1.5;margin:0 0 14px}
+.machine-modal label span,.field-hint{font-size:9px;color:#858b97;font-weight:400}
+.machine-modal .field-hint{display:block;margin-top:5px}
+.machine-modal input,.machine-modal select{font:inherit;color:#202635;background:#fff}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+.modal-actions button{min-width:100px;justify-content:center;padding:10px 14px;border-radius:8px}
+.modal-actions .secondary{border:1px solid var(--line);background:#fff;color:#4b5361}
+@media(max-width:600px){.machine-modal{padding:22px!important}.machine-tools input{width:100%}.modal-actions button{flex:1}}

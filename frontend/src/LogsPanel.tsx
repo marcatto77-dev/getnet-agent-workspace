@@ -1,0 +1,28 @@
+import {ReactNode,useEffect,useState} from 'react'
+import {ChevronDown,ChevronRight,Filter} from 'lucide-react'
+import './logs.css'
+import {api,localDateTimeIso,queryString} from './api'
+
+type Call={id:number;tool_name:string;input_summary:string;output_summary:string;success:boolean;latency_ms:number}
+type Run={id:string;request_id:string;user_id:string;route:string;agents_used:string[];status:string;latency_ms:number;tokens:any;cost:number|null;error:string|null;created_at:string;tool_calls:Call[]}
+type Page<T>={items:T[];total:number;page:number;page_size:number}
+type GuardrailEvent={id:number;request_id:string;conversation_id:string|null;layer:string;rule:string;action:string;severity:string;sample:string;created_at:string}
+
+export function LogsPanel({fail,audit}:{fail:(message:string)=>void;audit:ReactNode}){
+ const [tab,setTab]=useState<'runs'|'audit'|'guardrails'>('runs')
+ return <><div className="logs-tabs"><button className={tab==='runs'?'active':''} onClick={()=>setTab('runs')}>Execuções dos agentes</button><button className={tab==='guardrails'?'active':''} onClick={()=>setTab('guardrails')}>Guardrails</button><button className={tab==='audit'?'active':''} onClick={()=>setTab('audit')}>Auditoria administrativa</button></div>{tab==='runs'?<OperationalLogs fail={fail}/>:tab==='guardrails'?<GuardrailLogs fail={fail}/>:audit}</>
+}
+
+function GuardrailLogs({fail}:{fail:(message:string)=>void}){
+ const [data,setData]=useState<Page<GuardrailEvent>>({items:[],total:0,page:1,page_size:20})
+ useEffect(()=>{api<Page<GuardrailEvent>>('/admin/guardrails').then(setData).catch(e=>fail(e.message))},[])
+ return <div className="admin-panel operational-logs"><div className="panel-actions"><div><h2>Eventos de guardrail</h2><p>Bloqueios, redações e decisões de segurança.</p></div></div><div className="admin-table"><table><thead><tr><th>Data</th><th>Camada</th><th>Regra</th><th>Ação</th><th>Severidade</th><th>Amostra mascarada</th></tr></thead><tbody>{data.items.map(item=><tr key={item.id}><td>{new Date(item.created_at).toLocaleString('pt-BR')}</td><td>{item.layer}</td><td>{item.rule}</td><td><span className="pill">{item.action}</span></td><td>{item.severity}</td><td><code>{item.sample}</code></td></tr>)}</tbody></table></div><div className="pagination"><span>{data.total} eventos</span></div></div>
+}
+
+function OperationalLogs({fail}:{fail:(message:string)=>void}){
+ const [data,setData]=useState<Page<Run>>({items:[],total:0,page:1,page_size:20}),[filters,setFilters]=useState({start:'',end:'',route:'',tool:'',status:'',customer:''}),[page,setPage]=useState(1),[open,setOpen]=useState(new Set<string>())
+ const load=()=>{const params=queryString({...filters,start:localDateTimeIso(filters.start),end:localDateTimeIso(filters.end),page,page_size:20});api<Page<Run>>('/admin/logs?'+params).then(setData).catch(e=>fail(e.message))}
+ useEffect(load,[page]);const change=(key:string,value:string)=>setFilters(v=>({...v,[key]:value}));const toggle=(id:string)=>setOpen(v=>{const next=new Set(v);next.has(id)?next.delete(id):next.add(id);return next})
+ return <div className="admin-panel operational-logs"><form className="log-filters" onSubmit={e=>{e.preventDefault();setPage(1);load()}}><Filter/><label>De<input type="datetime-local" value={filters.start} onChange={e=>change('start',e.target.value)}/></label><label>Até<input type="datetime-local" value={filters.end} onChange={e=>change('end',e.target.value)}/></label><input aria-label="Filtrar rota" placeholder="Rota" value={filters.route} onChange={e=>change('route',e.target.value)}/><input aria-label="Filtrar ferramenta" placeholder="Ferramenta" value={filters.tool} onChange={e=>change('tool',e.target.value)}/><input aria-label="Filtrar status" placeholder="Status" value={filters.status} onChange={e=>change('status',e.target.value)}/><input aria-label="Filtrar cliente" placeholder="Cliente" value={filters.customer} onChange={e=>change('customer',e.target.value)}/><button>Filtrar</button></form><div className="runs-list">{data.items.map(run=><article key={run.id}><button className="run-summary" onClick={()=>toggle(run.id)}>{open.has(run.id)?<ChevronDown/>:<ChevronRight/>}<span><small>{new Date(run.created_at).toLocaleString('pt-BR')}</small><strong>{routeName(run.route)}</strong></span><code>{run.request_id}</code><span>{run.user_id}</span><span className="pill">{run.status}</span><b>{run.latency_ms} ms</b></button>{open.has(run.id)&&<div className="run-detail"><dl><div><dt>Agentes</dt><dd>{run.agents_used.join(' → ')||'—'}</dd></div><div><dt>Tokens</dt><dd>{JSON.stringify(run.tokens)}</dd></div><div><dt>Custo</dt><dd>{run.cost==null?'não calculado':`R$ ${run.cost}`}</dd></div><div><dt>Erro</dt><dd>{run.error||'—'}</dd></div></dl><h4>Trace de ferramentas</h4>{run.tool_calls.length?run.tool_calls.map(call=><section key={call.id} className={call.success?'success':'failed'}><header><strong>{call.tool_name}</strong><span>{call.latency_ms} ms · {call.success?'sucesso':'erro'}</span></header><div><label>Entrada resumida</label><pre>{call.input_summary}</pre></div><div><label>Saída resumida</label><pre>{call.output_summary}</pre></div></section>):<p>Nenhuma ferramenta registrada.</p>}</div>}</article>)}</div><div className="pagination"><span>{data.total} execuções</span><button disabled={page===1} onClick={()=>setPage(page-1)}>Anterior</button><button disabled={page*20>=data.total} onClick={()=>setPage(page+1)}>Próxima</button></div></div>
+}
+function routeName(route:string){return ({knowledge:'Conhecimento',support:'Suporte',knowledge_support:'Conhecimento + suporte',escalation:'Escalonamento',clarify:'Esclarecimento',blocked:'Bloqueado'} as Record<string,string>)[route]||route}

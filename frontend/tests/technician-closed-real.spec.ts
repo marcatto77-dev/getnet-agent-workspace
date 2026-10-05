@@ -1,0 +1,31 @@
+import {expect,test} from '@playwright/test'
+
+test.skip(!process.env.REAL_E2E,'Executa contra o Docker real')
+
+test('encerrados na área central com dez itens por página e histórico em somente leitura',async({page})=>{
+  const unexpected:string[]=[]
+  page.on('response',response=>{if(response.url().includes('/api/')&&response.status()>=400)unexpected.push(`${response.status()} ${response.url()}`)})
+  await page.goto('/login')
+  await page.getByLabel('Usuário').fill('Tecnico')
+  await page.getByLabel('Senha').fill('Tecnico')
+  await page.getByRole('button',{name:'Entrar'}).click()
+  await expect(page).toHaveURL(/\/tecnico\/atendimento/)
+  await page.getByRole('button',{name:/Encerrados/}).click()
+  await expect(page.getByRole('heading',{name:'Encerrados'})).toBeVisible()
+  await expect(page.locator('.center-sidebar .center-list')).toHaveCount(0)
+  await expect(page.locator('.closed-row')).toHaveCount(10)
+  await expect(page.getByRole('button',{name:'Página 1'})).toHaveAttribute('aria-current','page')
+  await page.screenshot({path:'../docs/evidence/closed-pagination/pagina-1.png',fullPage:true})
+  await page.getByRole('button',{name:'Página 2'}).click()
+  await expect(page.getByRole('button',{name:'Página 2'})).toHaveAttribute('aria-current','page')
+  await expect(page.locator('.closed-row').first()).toBeVisible()
+  await expect(page.locator('.closed-row')).not.toHaveCount(10)
+  await page.screenshot({path:'../docs/evidence/closed-pagination/pagina-2.png',fullPage:true})
+  await page.locator('.closed-row').first().getByRole('button',{name:'Ver histórico'}).click()
+  await expect(page.getByRole('button',{name:/Voltar aos encerrados/})).toBeVisible()
+  await expect(page.getByLabel('Mensagem ao cliente')).toHaveCount(0)
+  await page.getByRole('button',{name:/Voltar aos encerrados/}).click()
+  await expect(page.getByRole('button',{name:'Página 2'})).toHaveAttribute('aria-current','page')
+  await expect(page.locator('body')).not.toContainText('[object Object]')
+  expect(unexpected).toEqual([])
+})

@@ -1,0 +1,45 @@
+.customer-detail{padding:22px}
+.customer-overview{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.customer-overview>div>small{font-size:9px;letter-spacing:1.2px;color:#8c919d}
+.customer-overview h2{font-size:22px;margin:6px 0}
+.customer-overview p{font-size:11px;color:#747b88;margin:0}
+.customer-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}
+.customer-toolbar button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:8px 11px;color:#5a6270;font-size:10px}
+.customer-toolbar button:hover,.customer-terminal-list article button:hover{border-color:#e40046;color:#c4003b}
+.customer-machines-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:16px 0 10px}
+.customer-machines-heading h3{font-size:14px;margin:0}
+.customer-machines-heading p{font-size:10px;color:#878d99;margin:4px 0 0}
+.customer-machines-heading .primary{font-size:10px}
+.customer-terminal-list{display:grid;gap:8px}
+.customer-terminal-list article{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+.terminal-icon{width:34px;height:34px;flex:0 0 auto;border-radius:9px;background:#fff0f3;color:#e40046;display:grid;place-items:center;font-weight:700;font-size:13px}
+.terminal-info{display:grid;gap:4px;min-width:0;flex:1}
+.terminal-info strong{font-size:11px;color:#252b36}
+.terminal-info span{font-size:10px;color:#7c8390;overflow-wrap:anywhere}
+.customer-terminal-list article button{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:7px;background:#fff;color:#6d7481;padding:7px 9px;font-size:9px;white-space:nowrap}
+.customer-terminal-list article button svg{width:13px;height:13px}
+.customer-no-machines{border:1px dashed #d9dde4;border-radius:9px;padding:18px;color:#848b98;text-align:center;font-size:10px}
+.customer-modal{width:min(100%,760px)!important}
+.customer-edit-modal{max-height:92vh;overflow:auto}
+.admin-modal > .customer-details-modal{position:relative;display:flex;flex-direction:column;width:min(100%,676px)!important;min-height:min(560px,calc(100vh - 40px));max-height:92vh;overflow:auto;padding:36px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 60px #20233133;color:#202635}
+.customer-details-modal h2{margin-bottom:20px}
+.customer-details-contact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.customer-details-contact span{display:grid;gap:4px;min-height:58px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;color:#4b5361;font-size:12px}
+.customer-details-contact strong{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:#8a919e}
+.customer-details-contact em{justify-self:start;font-style:normal}
+.customer-modal-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px}
+.customer-modal-toolbar button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:8px 11px;color:#5a6270;font-size:10px}
+.customer-modal-toolbar button:hover:not(:disabled){border-color:#e40046;color:#c4003b}
+.customer-modal-toolbar button:disabled{opacity:.55;cursor:not-allowed}
+.customer-details-modal .customer-machines-heading .primary{width:auto;margin:0;justify-content:center}
+.customer-details-modal .customer-modal-machines{margin-top:auto}
+.customer-edit-modal .customer-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.customer-modal-machines{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.customer-modal-machines .customer-machines-heading{margin-top:0}
+.customer-modal-footer{position:sticky;bottom:-24px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;padding:14px 0 0;margin-top:18px;border-top:1px solid var(--line)}
+.customer-modal-footer>button,.customer-edit-actions button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:9px 13px;border-radius:8px}
+.customer-modal-footer>button svg{width:15px;height:15px}
+.customer-edit-actions{display:flex;gap:8px}
+.customer-edit-actions .primary{width:auto;margin:0}
+.link-modal{max-width:560px}
+@media(max-width:640px){.customer-edit-modal .customer-form-grid,.customer-details-contact{grid-template-columns:1fr;gap:0}.customer-details-contact{gap:8px}.customer-modal-footer{align-items:stretch;flex-direction:column}.customer-edit-actions{display:flex}.customer-edit-actions button{flex:1}.customer-terminal-list article{flex-wrap:wrap}.terminal-info{min-width:calc(100% - 55px)}.customer-terminal-list article .pill{margin-left:45px}.customer-terminal-list article button{margin-left:auto}}

@@ -1,0 +1,13 @@
+.agent-inspection{color:#27354b;font-size:14px;line-height:1.6}
+.agent-policy-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.agent-policy-grid article,.agent-source{background:#fff;border:1px solid var(--line,#dce0e7);border-radius:12px;padding:18px;min-width:0}
+.agent-policy-grid h3{font-size:15px;margin:0 0 8px}.agent-policy-grid p{margin:8px 0}
+.agent-flow{display:flex;flex-wrap:wrap;gap:12px;list-style:none;padding:16px 0;margin:12px 0}
+.agent-flow li{background:#ffedf2;padding:8px 12px;border-radius:8px}.agent-flow li:not(:last-child)::after{content:' →';color:#ed0045}
+.agent-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.agent-tabs button{border:1px solid var(--line,#dce0e7);background:white;padding:10px 16px;border-radius:8px;cursor:pointer}
+.agent-tabs button[aria-pressed=true]{color:#c50039;background:#ffedf2;border-color:#ed0045}
+.agent-source{margin:12px 0}.agent-source summary{cursor:pointer;font-weight:600}
+.agent-source pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.7;background:#f6f7f9;border-radius:8px;padding:16px;margin:14px 0 0}
+.agent-inspection button:focus-visible,.agent-source summary:focus-visible{outline:3px solid #ed0045;outline-offset:3px}
+@media(max-width:1000px){.agent-policy-grid{grid-template-columns:1fr}}
