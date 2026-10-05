@@ -30,7 +30,7 @@ jobs:
         env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
       - run: cp .env.example .env
       - run: docker compose build
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         # Bloqueia falhas corrigíveis; CVEs sem pacote corrigido não podem ser resolvidas no Dockerfile.
         with: {image-ref: 'getnet-api:latest', severity: 'HIGH,CRITICAL', ignore-unfixed: true, exit-code: '1'}
       - run: pytest -q backend/tests
