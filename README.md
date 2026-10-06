@@ -268,6 +268,8 @@ Esse roteiro consome créditos: verifica as dez rotas do desafio, a classificaç
 
 ## Entrega
 
+**Correção de segurança em 06/10/2026:** pedidos para executar ou repetir comandos, código e scripts são bloqueados antes do modelo, inclusive referências ao comando anterior e variantes codificadas. SVG/script enviados como código também são recusados. Orientações legítimas de operação da máquina continuam permitidas. Validação: 72 testes focados de segurança, escopo e integração aprovados; o teste do endpoint confirma a recusa na mesma conversa e falha se o provedor for chamado. Ruff aprovado e API local atualizada.
+
 O snapshot atual de publicação contém **212 arquivos** e passou pelo Gitleaks sem segredos detectados. `.env` permanece fora do índice. Ruff passou em aplicação, testes e scripts; Bandit passou no critério de severidade alta do CI (`-lll`), sem afirmar ausência de alertas médios. O [registro da revisão](docs/REVISAO_POLITICA_2026-10-05.md) reúne os resultados e limites.
 
 Este repositório foi preparado para clone e apresentação ao vivo. O avaliador precisa de Docker, Node.js 24 para os testes de navegador e uma chave OpenAI API para respostas reais e para gerar os embeddings do RAG. A pasta `docs/` contém o [guia técnico](docs/GUIA_TECNICO_APRESENTACAO.md), a [matriz de requisitos](docs/ADERENCIA_DESAFIO.md) e evidências visuais. A configuração local fica em `.env`, que é ignorado pelo Git. O corpus é composto por URLs oficiais e será ingerido no primeiro início com chave; o volume PostgreSQL e os dados gerados não fazem parte do repositório.

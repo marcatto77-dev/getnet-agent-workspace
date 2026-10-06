@@ -1517,6 +1517,11 @@ def chat(payload: ChatRequest, response: Response, request: Request):
             decision.safety_label,
             "Não posso processar essa solicitação com segurança. Posso chamar um técnico.",
         )
+        if decision.rule == "command_execution_request":
+            answer = (
+                "Não executo comandos, códigos ou scripts enviados pelo chat. "
+                "Posso ajudar com produtos, máquinas e atendimento Getnet."
+            )
         blocked = ChatResponse(
             request_id=request_id,
             conversation_id=str(conversation_id),

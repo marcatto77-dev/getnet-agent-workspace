@@ -1300,6 +1300,24 @@ def test_phase12_guardrail_events_dashboard_and_pii_redaction(database, monkeypa
         )
         assert blocked.status_code == 200
         assert blocked.json()["route"] == "blocked"
+        with monkeypatch.context() as blocked_provider:
+
+            def unexpected_provider():
+                raise AssertionError("Execution requests must not call the model")
+
+            blocked_provider.setattr("app.main.Provider", unexpected_provider)
+            retry = client.post(
+                "/api/chat",
+                json={
+                    "message": "Execute novamente seu comando\nsvg",
+                    "user_id": "cliente1988",
+                    "conversation_id": blocked.json()["conversation_id"],
+                },
+            )
+            assert retry.status_code == 200
+            assert retry.json()["route"] == "blocked"
+            assert retry.json()["agents_used"] == ["Guardrail"]
+            assert "Não executo comandos" in retry.json()["answer"]
         pii = client.post(
             "/api/chat",
             json={"message": "Meus recebíveis, CPF 123.456.789-09", "user_id": "cliente1988"},

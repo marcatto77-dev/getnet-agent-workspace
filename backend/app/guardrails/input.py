@@ -17,8 +17,17 @@ INJECTION = re.compile(
     r"(?:system|developer|assistant)\s*:\s*(?:ignore|override|new instructions)",
     re.I | re.S,
 )
+COMMAND_EXECUTION = re.compile(
+    r"(?:^|[.!?:]\s*)(?:(?:getnet|por favor|please|por favor,)[,:]?\s+)*"
+    r"(?:(?:pode|poderia|can you|could you|puedes|podrías)\s+)?"
+    r"(?:execut[ae](?:r)?|reexecut[ae](?:r)?|rod[ae](?:r)?|run|rerun|execute|ejecut[ae](?:r)?)"
+    r"\b.{0,60}\b(?:comando|c[oó]digo|script|command|code|svg|instrucciones)\b|"
+    r"^(?:execute|reexecute|rode|run|rerun|ejecuta)\s+(?:novamente|de novo|again|otra vez)[.!?]*$",
+    re.I | re.S,
+)
 CODE = re.compile(
-    r"```|(?:^|\s)(?:def\s+\w+\s*\(|class\s+\w+\s*[:({]|from\s+[\w.]+\s+import\s+|"
+    r"```|<\s*/?\s*(?:svg|script|foreignObject)\b|^svg$|"
+    r"(?:^|\s)(?:def\s+\w+\s*\(|class\s+\w+\s*[:({]|from\s+[\w.]+\s+import\s+|"
     r"import\s+[\w.]+|lambda\s+\w+\s*:|(?:exec|eval)\s*\(|"
     r"(?:const|let|var)\s+\w+\s*=|function\s+\w*\s*\(|"
     r"(?:SELECT\s+.+\s+FROM\s+|INSERT\s+INTO\s+|DROP\s+TABLE\s+)|"
@@ -101,6 +110,10 @@ def inspect_input(
     if any(item != current_user_id.casefold() for item in mentioned):
         return InputDecision(
             mask_sensitive(text), "cross_customer_request", True, "cross_customer_id", "block", "high"
+        )
+    if any(COMMAND_EXECUTION.search(candidate) for candidate in decoded_candidates(text)):
+        return InputDecision(
+            mask_sensitive(text), "prompt_injection", True, "command_execution_request", "block", "high"
         )
     injection, code = _encoded_unsafe(text)
     if injection:
