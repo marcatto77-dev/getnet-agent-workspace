@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { BookOpen, Boxes, LayoutDashboard, LogOut, Plus, ScrollText, Users } from 'lucide-react'
+import { BrandLogo } from './BrandLogo'
+import { BookOpen, Boxes, ContactRound, LayoutDashboard, LogOut, Plus, ScrollText, ShieldCheck, Users } from 'lucide-react'
 import './admin.css'
 import { api, formatApiError } from './api'
 import { CustomersPanel } from './CustomersPanel'
@@ -18,7 +19,7 @@ const roleLabel:Record<Role,string> = { admin:'Administrador', tecnico:'Técnico
 
 export function AdminWorkspaceV2() {
   const [me, setMe] = useState<User|null>(null)
-  const [section, setSection] = useState<Section>('users')
+  const [section, setSection] = useState<Section>('dashboard')
   const [error, setError] = useState('')
   const [ragDegraded, setRagDegraded] = useState(false)
 
@@ -39,19 +40,19 @@ export function AdminWorkspaceV2() {
 
   return <main className="admin-shell">
     <aside className="admin-nav">
-      <div className="admin-brand">getnet<span>_</span><small>ADMIN WORKSPACE</small></div>
-      <nav>{([
-        ['dashboard', LayoutDashboard, 'Dashboard'], ['users', Users, 'Usuários'], ['customers', Users, 'Clientes'],
-        ['machines', Boxes, 'Máquinas'], ['knowledge', BookOpen, 'Base de conhecimento'], ['logs', ScrollText, 'Logs'],
-        ['agents', BookOpen, 'Agentes e segurança'],
-      ] as [Section, typeof Users, string][]).map(([id, Icon, label]) => <button key={id} className={section===id?'active':''} onClick={() => { setSection(id); setError('') }}><Icon/>{label}</button>)}</nav>
+      <BrandLogo className="admin-brand" caption="ADMIN WORKSPACE"/>
+      <nav aria-label="Menu administrativo">{[
+        {label:'Visão geral',items:[['dashboard',LayoutDashboard,'Dashboard']]},
+        {label:'Gestão',items:[['users',Users,'Usuários'],['customers',ContactRound,'Clientes'],['machines',Boxes,'Máquinas']]},
+        {label:'Inteligência e controle',items:[['knowledge',BookOpen,'Base de conhecimento'],['agents',ShieldCheck,'Agentes e segurança'],['logs',ScrollText,'Logs']]},
+      ].map(group => <div className="admin-nav-group" key={group.label}><p className="admin-nav-group-title">{group.label}</p>{(group.items as [Section, typeof Users, string][]).map(([id,Icon,label]) => <button key={id} aria-current={section===id?'page':undefined} className={section===id?'active':''} onClick={() => { setSection(id); setError('') }}><Icon aria-hidden="true"/><span className="admin-nav-label">{label}</span></button>)}</div>)}</nav>
       <div className="admin-profile"><strong>{me?.display_name}</strong><span>Administrador</span><button onClick={logout}><LogOut/>Sair</button></div>
     </aside>
     <section className="admin-main">
       <header><div><small>ADMINISTRAÇÃO</small><h1>{title[section]}</h1></div></header>
       {ragDegraded && <div className="admin-alert" role="status">Base de conhecimento indisponível ou vazia. <button onClick={() => setSection('knowledge')}>Abrir reindexação</button></div>}
       {error && <div className="admin-alert" role="alert">{error}<button onClick={() => setError('')}>×</button></div>}
-      {section==='dashboard' && <DashboardPanel fail={fail}/>}
+      {section==='dashboard' && <DashboardPanel/>}
       {section==='users' && <UsersPanel me={me} fail={fail}/>}
       {section==='customers' && <CustomersPanel fail={fail}/>}
       {section==='machines' && <MachinesPanel fail={fail}/>}

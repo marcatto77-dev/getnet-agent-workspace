@@ -30,9 +30,19 @@ MESSAGES = {
         "es": "No pude verificar una respuesta en la base de conocimiento ni en el sitio oficial de Getnet. ¿Puede detallar su consulta o lo que ya intentó para que pueda seguir ayudándole?",
     },
     "missing_exchange": {
-        "pt": "Não consegui confirmar uma cotação atual nas fontes financeiras oficiais. Qual par de moedas e data você deseja consultar?",
-        "en": "I could not verify a current exchange rate from official financial sources. Which currency pair and date would you like to check?",
-        "es": "No pude verificar una cotización actual en las fuentes financieras oficiales. ¿Qué par de monedas y fecha desea consultar?",
+        "pt": "A consulta às fontes financeiras oficiais não retornou uma cotação verificável para esse par e data. Não vou inventar um valor. Você pode tentar novamente em instantes.",
+        "en": "The official financial sources did not return a verifiable quotation for that pair and date. I will not invent a value. Please try again shortly.",
+        "es": "Las fuentes financieras oficiales no devolvieron una cotización verificable para ese par y fecha. No inventaré un valor. Puede intentarlo de nuevo en unos instantes.",
+    },
+    "exchange_pair": {
+        "pt": "Qual moeda você quer consultar: dólar para real, euro para real ou outro par? Se não indicar uma data, consultarei a cotação mais recente.",
+        "en": "Which currency pair would you like: USD/BRL, EUR/BRL or another pair? Without a date, I will look up the latest quotation.",
+        "es": "¿Qué par desea consultar: USD/BRL, EUR/BRL u otro? Sin fecha, consultaré la cotización más reciente.",
+    },
+    "exchange_date": {
+        "pt": "Essa data não é válida. Informe a data no formato dd/mm/aaaa.",
+        "en": "That date is invalid. Please provide a date in dd/mm/yyyy format.",
+        "es": "La fecha no es válida. Indique la fecha en formato dd/mm/aaaa.",
     },
     "continue": {
         "pt": "Tudo bem, continuamos por aqui. O que ainda falta resolver ou o que aconteceu após a última orientação?",

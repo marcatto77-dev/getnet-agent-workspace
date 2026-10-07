@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import date, datetime
 from hashlib import sha256
 from time import perf_counter
 from uuid import UUID, uuid4
@@ -40,7 +40,7 @@ from .administration import (
 )
 from .agent_inspection import inspection_snapshot
 from .agents import build_graph
-from .analytics import dashboard, operational_logs
+from .analytics import dashboard, dashboard_details, operational_logs
 from .auth import (
     DUMMY_PASSWORD_HASH,
     create_access_token,
@@ -99,6 +99,7 @@ from .persistence import (
     persist_run,
     update_conversation_summary,
 )
+from .presence import update_presence
 from .privacy import anonymize_customer, apply_retention, export_customer_data
 from .provider import BudgetExceeded, Provider, ProviderUnavailable
 from .rag_admin import (
@@ -128,6 +129,7 @@ from .schemas import (
     LoginRequest,
     MachineCreate,
     MachineUpdate,
+    PresenceRequest,
     PullHandoffRequest,
     RagDocumentCreate,
     RagDocumentUpdate,
@@ -454,6 +456,11 @@ def me(response: Response, user: dict = Depends(current_user)):
     return user
 
 
+@app.post("/api/auth/presence", status_code=204)
+def authenticated_presence(payload: PresenceRequest, user: dict = Depends(current_user)):
+    update_presence(user, payload.session_id, payload.active)
+
+
 @app.get("/api/customer/profile")
 def customer_profile(user: dict = Depends(require_role("cliente"))):
     with connection() as conn:
@@ -704,9 +711,22 @@ def _parse_filter_datetime(value: str | None) -> datetime | None:
 @app.get("/api/admin/dashboard")
 def admin_dashboard(
     period: str = Query("today", pattern="^(today|7d|30d)$"),
+    day: date | None = Query(None, alias="date"),
     user: dict = Depends(require_role("admin")),
 ):
-    return dashboard(period)
+    return dashboard(period, day=day)
+
+
+@app.get("/api/admin/dashboard/details")
+def admin_dashboard_details(
+    kind: str = Query(..., pattern="^(blocked|conversations|handoffs)$"),
+    period: str = Query("today", pattern="^(today|7d|30d)$"),
+    day: date | None = Query(None, alias="date"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+    user: dict = Depends(require_role("admin")),
+):
+    return dashboard_details(kind, period, day, page, page_size)
 
 
 def _rag_error(exc: Exception):
@@ -1448,16 +1468,17 @@ def chat(payload: ChatRequest, response: Response, request: Request):
                 "Limite de mensagens atingido. Aguarde antes de tentar novamente.",
                 headers={"Retry-After": str(retry_after)},
             )
-    with connection() as conn:
-        used = conn.execute(
-            "SELECT tokens FROM customer_token_usage_daily WHERE customer_id=%s AND day=CURRENT_DATE",
-            (customer_id,),
-        ).fetchone()
-        if used and used["tokens"] >= cfg.customer_daily_token_budget:
-            raise HTTPException(
-                429,
-                "Orçamento diário de atendimento atingido. Tente novamente amanhã ou fale com um técnico.",
-            )
+    if not cfg.unlimited_demo_usage:
+        with connection() as conn:
+            used = conn.execute(
+                "SELECT tokens FROM customer_token_usage_daily WHERE customer_id=%s AND day=CURRENT_DATE",
+                (customer_id,),
+            ).fetchone()
+            if used and used["tokens"] >= cfg.customer_daily_token_budget:
+                raise HTTPException(
+                    429,
+                    "Orçamento diário de atendimento atingido. Tente novamente amanhã ou fale com um técnico.",
+                )
     start = perf_counter()
     request_uuid = uuid4()
     request_id = str(request_uuid)
@@ -1757,7 +1778,7 @@ def chat(payload: ChatRequest, response: Response, request: Request):
             response.status = "blocked"
             response.sources = []
         output_domains = cfg.allowed_web_domains
-        if result["route"].knowledge_source == "web" and is_exchange_query(payload.message):
+        if result["route"].knowledge_source == "web" and is_exchange_query(result["route"].search_query):
             output_domains = (*output_domains, *EXCHANGE_DOMAINS)
         try:
             output_ok, output_rule, safe_answer = inspect_output(response.answer, output_domains)

@@ -10,7 +10,7 @@ test('admin cria técnico e o novo usuário acessa a área técnica',async({brow
       await route.fulfill({status:201,json:{id:44,username:payload.username,role:payload.role,display_name:payload.display_name,is_active:true,presence:'offline'}})
     }else await route.fulfill({json:created.map((u,index)=>({id:44+index,...u,password:undefined,is_active:true,presence:'offline'}))})
   })
-  await admin.goto('/admin');await admin.getByRole('button',{name:/Novo usuário/}).click();await admin.getByLabel('Nome de exibição').fill('Técnico Plantão');await admin.getByLabel('Usuário').fill('plantao');await admin.getByLabel('Senha').fill('SenhaSegura123!');await admin.getByLabel('Perfil').selectOption('tecnico');await admin.getByRole('button',{name:'Criar usuário'}).click();await expect.poll(()=>created.length).toBe(1)
+  await admin.goto('/admin');await admin.getByRole('button',{name:'Usuários',exact:true}).click();await admin.getByRole('button',{name:/Novo usuário/}).click();await admin.getByLabel('Nome de exibição').fill('Técnico Plantão');await admin.getByLabel('Usuário').fill('plantao');await admin.getByLabel('Senha').fill('SenhaSegura123!');await admin.getByLabel('Perfil').selectOption('tecnico');await admin.getByRole('button',{name:'Criar usuário'}).click();await expect.poll(()=>created.length).toBe(1)
 
   const techContext=await browser.newContext(),tech=await techContext.newPage()
   await tech.route('**/api/auth/login',async route=>{const body=route.request().postDataJSON();expect(body).toEqual({username:'plantao',password:'SenhaSegura123!'});await route.fulfill({json:{id:44,username:'plantao',role:'tecnico',display_name:'Técnico Plantão'}})})
@@ -64,7 +64,7 @@ test('admin visualiza dashboard e trace dos logs de atendimentos',async({page})=
   await page.route('**/api/admin/users',route=>route.fulfill({json:[]}))
   await page.route('**/api/admin/dashboard**',route=>route.fulfill({json:{cards:{attendances:3,distinct_customers:2,resolved_by_ai:2,escalated:1,blocked:1,waiting:0,in_progress:1,average_response_ms:245,input_tokens:120,output_tokens:45,cost:0.003},attendances_by_day:[{day:'2026-09-20',total:3}],routes:[{route:'knowledge',total:2},{route:'escalate',total:1}],escalation_rate:33.33,technicians:[{id:2,display_name:'Técnico',status:'online',active_chats:1,attended:1}]}}))
   await page.route('**/api/admin/logs**',route=>route.fulfill({json:{items:[{id:'run-1',request_id:'request-123',user_id:'cliente1988',route:'knowledge',agents_used:['Router','Knowledge'],status:'ok',latency_ms:245,tokens:{input_tokens:120,output_tokens:45},cost:0.003,error:null,created_at:'2026-09-20T12:00:00Z',tool_calls:[{id:1,tool_name:'rag.retrieve',input_summary:'pergunta mascarada',output_summary:'2 chunks',success:true,latency_ms:18}]}],total:1,page:1,page_size:20}}))
-  await page.goto('/admin');await page.getByRole('button',{name:'Dashboard'}).click();await expect(page.getByText('Conversas iniciadas',{exact:true})).toBeVisible();await expect(page.getByText('33.33%')).toBeVisible();await expect(page.getByText('Técnico',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Logs'}).click();await expect(page.getByText('request-123')).toBeVisible();await page.locator('.run-summary').click();await expect(page.getByText('rag.retrieve')).toBeVisible();await expect(page.getByText('2 chunks')).toBeVisible()
+  await page.goto('/admin');await page.getByRole('button',{name:'Dashboard'}).click();await expect(page.getByText('Conversas iniciadas',{exact:true})).toBeVisible();await expect(page.getByText('33.33%')).toBeVisible();await expect(page.getByRole('cell',{name:'Técnico',exact:true})).toBeVisible();await page.getByRole('button',{name:'Logs'}).click();await expect(page.getByText('request-123')).toBeVisible();await page.locator('.run-summary').click();await expect(page.getByText('rag.retrieve')).toBeVisible();await expect(page.getByText('2 chunks')).toBeVisible()
 })
 
 test('admin contém a rolagem nas tabelas e explica as bases das métricas',async({browser})=>{
@@ -85,9 +85,9 @@ test('admin contém a rolagem nas tabelas e explica as bases das métricas',asyn
       if(width<=768)expect(sizes.table).toBeGreaterThan(sizes.box)
     }
     await page.getByRole('button',{name:'Dashboard'}).click()
-    await expect(page.getByText('Execuções por rota (inclui bloqueios)')).toBeVisible()
-    await expect(page.getByText('a soma não equivale ao número de conversas.')).toBeVisible()
-    await expect(page.getByText('Conversas sem encaminhamento humano; não significa resolução pela IA.')).toBeVisible()
+    await expect(page.getByRole('heading',{name:'Caminhos dos agentes'})).toBeVisible()
+    await expect(page.getByText('Execuções por rota; não equivale a conversas.')).toBeVisible()
+    await expect(page.getByText('Sem encaminhamento humano. Não confirma resolução ou satisfação pela IA.')).toBeVisible()
     const bodyWidth=await page.evaluate(()=>document.body.scrollWidth)
     expect(bodyWidth,`Dashboard em ${width}px`).toBeLessThanOrEqual(width)
     await context.close()

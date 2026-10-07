@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     daily_web_call_limit: int = 10
     max_output_tokens: int = 900
     demo_mode: bool = True
+    demo_unlimited_usage: bool = False
     auth_jwt_secret: SecretStr = SecretStr("change-this-demo-secret-before-production")
     auth_cookie_name: str = "getnet_session"
     customer_cookie_name: str = "getnet_customer_session"
@@ -68,6 +69,10 @@ class Settings(BaseSettings):
     openai_circuit_failure_threshold: int = 4
     openai_circuit_reset_seconds: int = 60
     metrics_token: SecretStr = SecretStr("")
+
+    @property
+    def unlimited_demo_usage(self) -> bool:
+        return self.demo_unlimited_usage and self.demo_mode and self.app_env.casefold() == "development"
 
     @property
     def anonymous_chat_enabled(self) -> bool:

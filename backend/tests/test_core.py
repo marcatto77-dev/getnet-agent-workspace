@@ -112,6 +112,9 @@ def test_gpt41_web_search_uses_citation_allowlist_without_unsupported_filters(mo
     answer, sources = provider.web("Getnet Brasil quanto tempo para receber vendas")
     assert answer == "Orientação geral"
     assert "filters" not in captured["tools"][0]
+    from app.prompts import ANSWER_STYLE
+
+    assert ANSWER_STYLE in captured["instructions"]
     assert [source["url"] for source in sources] == ["https://site.getnet.com.br/duvidas/"]
 
 
@@ -382,19 +385,20 @@ def test_empty_personal_data_tries_rag_and_official_site_before_handoff(monkeypa
     assert result["sources"][0]["url"].startswith("https://site.getnet.com.br/")
 
 
-def test_web_uses_web_path():
+def test_web_uses_web_path(monkeypatch):
+    monkeypatch.setattr("app.agents.lookup_ptax", lambda *_: None)
     provider = FakeProvider(
         Route(
             route="knowledge",
             knowledge_source="web",
             support_tools=[],
-            search_query="tempo hoje",
+            search_query="cotação dólar hoje",
             clarification="",
         )
     )
     result = build_graph(provider).invoke(
         {
-            "message": "tempo hoje",
+            "message": "cotação dólar hoje",
             "user_id": "cliente1988",
             "conversation_id": "00000000-0000-0000-0000-000000000001",
             "failure_count": 0,

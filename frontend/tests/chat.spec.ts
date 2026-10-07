@@ -15,7 +15,7 @@ test('authenticated customer sends message and sees a clean answer with sources'
   await page.getByRole('button',{name:'Enviar mensagem'}).click()
   expect((await response).status()).toBe(200)
   await expect(page.locator('.public-message.ai').last()).toContainText('Resposta fundamentada')
-  await expect(page.getByRole('link',{name:/Site Getnet/})).toHaveAttribute('href','https://site.getnet.com.br/')
+  await expect(page.getByRole('link',{name:'Base interna · Getnet oficial'})).toHaveAttribute('href','https://site.getnet.com.br/')
   await expect(page.getByText('Por trás da resposta')).toHaveCount(0)
   await expect(page.getByText('Atividade dos agentes')).toHaveCount(0)
   await expect(page.getByText('Base de conhecimento')).toHaveCount(0)

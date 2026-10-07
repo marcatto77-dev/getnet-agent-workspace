@@ -11,7 +11,8 @@ from pydantic import ValidationError
 from . import prompts
 from .config import settings
 from .conversation_policy import offer_choices, offer_reply, policy_message
-from .guardrails.scope import is_exchange_query
+from .exchange import exchange_request, lookup_ptax, public_exchange_query
+from .guardrails.scope import is_exchange_query, is_getnet_relationship_question
 from .guardrails.tools import execute_readonly, validate_tool_plan
 from .handoff.service import create_handoff
 from .rag import catalog_question, retrieve
@@ -55,6 +56,7 @@ class State(TypedDict, total=False):
     customer_context: dict
     conversation_memory: dict
     quick_replies: list[str]
+    exchange_request: dict | None
 
 
 def step(state, agent, action, start):
@@ -119,6 +121,21 @@ def empty_customer_evidence(item: dict) -> bool:
         return False
 
 
+def draft_needs_public_lookup(draft: Draft) -> bool:
+    """Do not let a cited but explicitly unverified public answer skip fallback."""
+    return draft.insufficient_evidence or bool(
+        re.search(
+            r"n[aã]o (?:p[oô]de|pude|foi poss[ií]vel|consegui) (?:ser )?(?:verificar|confirmar|validar)|"
+            r"pode n[aã]o estar atualizada|considerada n[aã]o confi[aá]vel|"
+            r"(?:could not|cannot|unable to) (?:be )?(?:verify|confirm)|"
+            r"(?:may|might) (?:be outdated|not be up.to.date)|"
+            r"no (?:pude|se pudo) (?:verificar|confirmar)",
+            draft.answer,
+            re.I,
+        )
+    )
+
+
 def build_graph(provider):
     def router(state):
         start = perf_counter()
@@ -154,6 +171,11 @@ def build_graph(provider):
                     safety_label="prompt_injection",
                 )
             memory = state.get("conversation_memory", {})
+            if route.safety_label == "off_topic" and is_getnet_relationship_question(state["message"]):
+                route.safety_label = "ok"
+                route.route = "knowledge"
+                route.support_tools = []
+                route.search_query = state["message"]
             reply = offer_reply(state["message"]) if memory.get("handoff_offered") else None
             if route.safety_label != "ok":
                 route.route = "blocked"
@@ -176,6 +198,26 @@ def build_graph(provider):
                 route.support_tools = []
             if route.route == "knowledge_support":
                 route.knowledge_source = "rag"
+            currency_hint = (
+                [route.currency_base, route.currency_quote or "BRL"] if route.currency_base else None
+            )
+            exchange = exchange_request(state["message"], memory, currency_hint=currency_hint)
+            if route.route in {"knowledge", "knowledge_support"} and not exchange:
+                # Getnet knowledge always tries the internal corpus before live web.
+                route.knowledge_source = "rag"
+            if exchange and route.route not in {"blocked", "escalation"}:
+                route.support_tools = []
+                route.customer_dissatisfied = False
+                if not exchange.get("pair") or exchange.get("invalid_date"):
+                    route.route = "clarify"
+                    route.clarification = policy_message(
+                        "exchange_date" if exchange.get("invalid_date") else "exchange_pair",
+                        route.language,
+                    )
+                else:
+                    route.route = "knowledge"
+                    route.knowledge_source = "web"
+                    route.search_query = public_exchange_query(exchange)
             if (
                 route.route not in {"blocked", "escalation"}
                 and route.customer_dissatisfied
@@ -206,6 +248,7 @@ def build_graph(provider):
             reason = "cliente_pediu" if route.route == "escalation" else ""
         return {
             "route": route,
+            "exchange_request": exchange_request(state["message"], state.get("conversation_memory", {})),
             "evidence": [],
             "sources": [],
             "handoff_token": None,
@@ -229,12 +272,26 @@ def build_graph(provider):
         )
         if (
             route.knowledge_source != "web"
+            and route.route == "knowledge_support"
             and selected
             and selected.get("model")
             and selected["model"].casefold() not in query.casefold()
         ):
             query = f"{query} modelo {selected['model']}"
         if route.knowledge_source == "web":
+            request = state.get("exchange_request")
+            ptax = lookup_ptax(request, route.language) if request and request.get("pair") else None
+            if ptax:
+                answer, sources = ptax
+                return {
+                    "answer": answer,
+                    "sources": sources,
+                    "status": "ok",
+                    "tool_calls": call(state, "bcb_ptax", request, {"sources": sources}, start),
+                    "steps": step(
+                        state, "Knowledge", "Cotação pública consultada na API PTAX do Banco Central", start
+                    ),
+                }
             query += f". Response language: {route.language}"
             answer, sources = provider.web(query)
             return {
@@ -382,6 +439,8 @@ def build_graph(provider):
         )
         draft = provider.structured(prompt, payload, Draft)
         answer, sources, insufficient = enforce_sources(draft, evidence)
+        if state["route"].route == "knowledge":
+            insufficient = insufficient or draft_needs_public_lookup(draft)
         return {
             "answer": answer,
             "sources": sources,
@@ -520,7 +579,7 @@ def build_graph(provider):
         return {
             "answer": policy_message(
                 "missing_exchange"
-                if is_exchange_query(state["message"]) and state["route"].knowledge_source == "web"
+                if is_exchange_query(state["route"].search_query) and state["route"].knowledge_source == "web"
                 else "missing",
                 state["route"].language,
             ),

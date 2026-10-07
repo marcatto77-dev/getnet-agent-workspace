@@ -70,7 +70,7 @@ def route_role(path: str, method: str) -> str:
         return "tecnico"
     if path.startswith("/api/customer"):
         return "cliente"
-    if path in {"/api/auth/me", "/api/auth/logout", "/api/auth/change-password"}:
+    if path in {"/api/auth/me", "/api/auth/logout", "/api/auth/change-password", "/api/auth/presence"}:
         return "authenticated"
     if path.startswith("/api/chat/conversations") or path == "/api/chat/current":
         return "cliente-session"

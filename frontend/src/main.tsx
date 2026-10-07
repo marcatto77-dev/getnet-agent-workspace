@@ -5,7 +5,11 @@ import { ChangePasswordPage, LoginPage } from './AuthPages'
 import { TechnicianWorkspace } from './TechnicianWorkspace'
 import { AdminWorkspaceV2 } from './AdminWorkspaceV2'
 import './style.css'
+import { PresenceHeartbeat } from './PresenceHeartbeat'
+import './admin-readability.css'
+import './portal-readability.css'
 
 const path=window.location.pathname.replace(/\/$/,'')||'/'
 const page=path==='/login'?<LoginPage/>:path==='/change-password'?<ChangePasswordPage/>:path==='/admin'?<AdminWorkspaceV2/>:path==='/tecnico'||path==='/tecnico/atendimento'?<TechnicianWorkspace/>:<App/>
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode>{page}</React.StrictMode>)
+const internalArea=path==='/admin'||path==='/tecnico'||path==='/tecnico/atendimento'
+ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode>{internalArea&&<PresenceHeartbeat/>}{page}</React.StrictMode>)

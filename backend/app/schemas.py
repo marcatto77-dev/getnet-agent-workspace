@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict, Field, field_validator
@@ -10,6 +11,11 @@ class BaseModel(PydanticBaseModel):
 
 class StrictWriteModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class PresenceRequest(StrictWriteModel):
+    session_id: UUID
+    active: bool = True
 
 
 class ChatRequest(StrictWriteModel):
@@ -39,6 +45,8 @@ class Route(BaseModel):
     language: str = Field(default="pt", pattern=r"^[a-z]{2,3}(?:-[A-Za-z]{2,4})?$")
     customer_dissatisfied: bool = False
     accepts_human_offer: bool = False
+    currency_base: str = Field(default="", pattern=r"^(?:[A-Z]{3})?$")
+    currency_quote: str = Field(default="", pattern=r"^(?:[A-Z]{3})?$")
     safety_label: Literal[
         "ok", "off_topic", "prompt_injection", "sensitive_data", "abusive", "cross_customer_request"
     ] = "ok"

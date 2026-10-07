@@ -57,6 +57,36 @@ A resposta JSON inclui `answer`, `route`, `agents_used`, `sources`, `conversatio
 
 ## Como funciona
 
+### Interfaces e identidade visual
+
+No chat, **Base interna** identifica evidência recuperada do RAG (inclusive páginas Getnet já indexadas); **Busca online** identifica busca feita naquele atendimento. Um link para o site não significa, sozinho, consulta ao vivo.
+
+### Demonstração sem orçamento diário
+
+`DEMO_UNLIMITED_USAGE=true` libera os orçamentos diários locais de tokens por cliente e de chamadas de modelo/embeddings/web quando `APP_ENV=development` e `DEMO_MODE=true`. O exemplo de ambiente vem habilitado para a apresentação. O uso continua contabilizado; não apaga histórico ou contadores. Em produção ou fora do modo demo, esse sinalizador não desativa os limites. Guardrails, autenticação e limitação de mensagens por minuto continuam ativos. **A cobrança e os limites da conta OpenAI continuam valendo**; desligue o sinalizador para voltar aos tetos locais.
+
+### RAG antes da busca online
+
+Conhecimento Getnet sempre começa pela base interna; somente falta de evidência suficiente aciona o site oficial. Câmbio continua sendo consulta externa permitida. A recuperação combina similaridade vetorial pgvector com busca textual PostgreSQL em títulos/trechos, mantendo a exclusão de conteúdo pendente ou em quarentena. O título ajuda a recuperar cadastros curtos que uma busca exclusivamente vetorial pode perder. O modelo selecionado da máquina complementa apenas consultas de suporte técnico, não perguntas gerais sobre endereço ou Link de Pagamento.
+
+Os portais do cliente e do técnico seguem a mesma melhoria de legibilidade do Admin: tipografia ampliada, campos e botões maiores, cartões com hierarquia clara e layouts responsivos. A revisão inclui login, troca de senha, atendimento, máquinas, conta, fila, conversas ativas, encerradas, contexto e modais de atendimento. Em telas menores, o contexto do técnico fica abaixo da conversa, em vez de desaparecer. Os fluxos e permissões permanecem os mesmos.
+
+No cliente, o chat aproveita mais a largura disponível (até 1440 px), com mensagens de 16 px, cabeçalho e rodapé compactos e a frase de ajuda junto à identificação do assistente. A seção atual do menu fica destacada em vermelho, com sublinhado e marcação acessível de página ativa.
+
+O logotipo original foi obtido do [site oficial da Getnet](https://site.getnet.com.br/wp-content/uploads/2022/08/LOGO-GETNET.png) e incluído localmente, sem depender de uma requisição externa para aparecer. A marca pertence à Getnet e não está coberta pela licença do código deste protótipo; seu uso não indica vínculo ou endosso oficial. Veja [Interfaces dos portais](docs/INTERFACE_PORTAIS.md) para escopo e testes.
+
+### Dashboard administrativo
+
+Em **Admin → Dashboard**, os indicadores têm tipografia ampliada, layout assimétrico e detalhes em modal centralizado. Clique nos cartões, barras por dia, rotas dos agentes, taxa de escalonamento ou detalhes de um técnico para consultar valores e sua base de cálculo. O modal também funciona por teclado (Enter, Tab e Escape).
+
+O resumo começa em Hoje e permite Hoje, 7 ou 30 dias e uma **data específica** no calendário. O gráfico **Conversas dos últimos 7 dias** sempre mostra sete dias completos (inclusive zeros); **Ver conversas** abre a lista paginada, e clicar numa barra filtra aquele dia. Os detalhes de **Eventos bloqueados** mostram regras, horários, severidade e trechos de entrada mascarados; saídas bloqueadas são omitidas. **Encaminhadas a técnicos** mostra cliente, situação e responsável humano, sem confundir o agente Support com um técnico.
+
+A leitura atualiza a cada 30 segundos e pelo botão **Atualizar**. Clientes conectados aparecem separados dos técnicos; a presença é registrada por aba autenticada no PostgreSQL, atualizada a cada 30 segundos e expira após 90 segundos sem atualização. No portal, o registro começa após validar o perfil de cliente em `/api/auth/me` e é renovado também ao voltar à aba. Fechar/sair da aba tenta liberar sua presença imediatamente; logout, troca de senha e desativação invalidam a presença da sessão. Técnico disponível exige presença recente **e** disponibilidade Online — o valor salvo sozinho não conta como conectado. Atualize também as abas já abertas após instalar esta versão.
+
+Fila, atendimentos ativos e presença são o estado atual, independentemente da data selecionada. Conversas sem handoff **não significam resolução confirmada pela IA**. As listas de conversas exibem metadados, não o conteúdo do chat ou notas internas. Os detalhes têm calendário próprio, restrição de Admin e paginação de 10 registros.
+
+Teste da interface: `cd frontend` e `npx playwright test tests/dashboard.spec.ts`. Referências e critérios visuais em [Dashboard administrativo](docs/DASHBOARD_ADMIN.md).
+
 ```mermaid
 flowchart LR
     C[Portal do cliente] --> W[Nginx / React]
@@ -77,10 +107,13 @@ O orquestrador está em `backend/app/agents.py`; prompts separados por agente em
 
 - **Router:** classifica intenção e segurança; produz rota estruturada validada.
 - **Knowledge:** recupera evidências do RAG e, se insuficientes, tenta busca oficial; não deve inventar preços, taxas ou prazos.
+- **Estilo das respostas:** começa pela informação sustentada pela fonte e a cita, sem ressalvas genéricas de incerteza. Lacunas, conflitos e limitações reais continuam explícitos. Texto cadastrado manualmente não é apresentado como documento oficial. A política compartilhada está em `ANSWER_STYLE`, em `backend/app/prompts.py`, e vale para Knowledge, Support e busca web.
 - **Support:** usa ferramentas de leitura `get_customer_profile`, `get_receivables`, `get_terminal_status` e `list_customer_terminals`. O backend injeta a identidade da sessão.
 - **Escalation:** resume a conversa e abre handoff após pedido explícito ou aceite de uma oferta de atendimento humano. Após três respostas de assistência e insatisfação do cliente, a IA oferece o técnico. RAG/web sem resposta pede mais contexto; não cria chamado automaticamente.
 
 ### Como o LangGraph orquestra os agentes
+
+**Câmbio com contexto:** uma pergunta genérica pede apenas o par ausente; a resposta “dólar para real hoje” completa a consulta e aciona Knowledge/web. Respostas curtas de data usam a última pergunta de câmbio do cliente na memória da conversa. A consulta USD/BRL e EUR/BRL usa primeiro a API pública PTAX do Banco Central, sem enviar identidade ou histórico ao BCB; a busca financeira oficial continua como alternativa. A resposta informa compra, venda e data efetiva do fechamento. Para “hoje”, se não houver fechamento publicado, indica explicitamente o último fechamento disponível; uma data histórica explícita não é substituída silenciosamente. Falha da fonte não provoca nova pergunta sobre moeda/data já informadas. Implementação em `backend/app/exchange.py`.
 
 `build_graph()` em `backend/app/agents.py` constrói um `StateGraph(State)`. O estado compartilhado carrega mensagem, identidade validada, memória da conversa, rota, evidências, fontes, resposta e trace de ferramentas. Cada nó devolve os campos que atualizou. As arestas condicionais decidem o próximo nó usando a rota e o resultado anterior; a API executa o grafo com `graph.invoke(...)`.
 
@@ -205,6 +238,10 @@ flowchart LR
 
 A documentação pode ser em português: o [enunciado](knowledge/Desafio.md) não exige inglês. A apresentação será ao vivo, conforme a modalidade de entrega escolhida para este projeto.
 
+## Interface administrativa
+
+Ao entrar ou atualizar `/admin`, a tela inicial é o **Dashboard**. O menu agrupa Visão geral, Gestão e Inteligência e controle, com textos maiores, ícones e identificação da seção ativa. Todas as páginas administrativas compartilham tipografia legível, tabelas e formulários ampliados, contraste e foco de teclado. Em telas pequenas, o menu mantém os nomes das opções e as tabelas rolam internamente. A revisão visual tem testes em `frontend/tests/admin-readability.spec.ts` e capturas em `docs/evidence/admin-readability/` (arquivos sem prefixo `real-` usam dados controlados de teste).
+
 ## Configuração essencial
 
 | Variável (`.env`) | Padrão de demo | Observação |
@@ -273,3 +310,8 @@ Esse roteiro consome créditos: verifica as dez rotas do desafio, a classificaç
 O snapshot atual de publicação contém **212 arquivos** e passou pelo Gitleaks sem segredos detectados. `.env` permanece fora do índice. Ruff passou em aplicação, testes e scripts; Bandit passou no critério de severidade alta do CI (`-lll`), sem afirmar ausência de alertas médios. O [registro da revisão](docs/REVISAO_POLITICA_2026-10-05.md) reúne os resultados e limites.
 
 Este repositório foi preparado para clone e apresentação ao vivo. O avaliador precisa de Docker, Node.js 24 para os testes de navegador e uma chave OpenAI API para respostas reais e para gerar os embeddings do RAG. A pasta `docs/` contém o [guia técnico](docs/GUIA_TECNICO_APRESENTACAO.md), a [matriz de requisitos](docs/ADERENCIA_DESAFIO.md) e evidências visuais. A configuração local fica em `.env`, que é ignorado pelo Git. O corpus é composto por URLs oficiais e será ingerido no primeiro início com chave; o volume PostgreSQL e os dados gerados não fazem parte do repositório.
+## Política de resposta e fallback oficial
+
+Consultas de câmbio aceitam outras moedas além de dólar/euro. Sem destino, usam real (BRL); com destino explícito, preservam o par, por exemplo USD/EUR. As dez moedas da API PTAX têm consulta direta; pares cruzados usam referências do mesmo fechamento e são identificados como conversões indicativas. Outras moedas, incluindo peso argentino, usam busca financeira oficial. A disponibilidade depende das fontes: nenhum valor é inventado quando não houver cotação verificável.
+
+O atendimento tenta a base interna antes da busca pública. Perguntas institucionais Getnet (incluindo endereço e relação com Santander) são permitidas. Se o RAG estiver vazio, não cobrir a pergunta ou a resposta pública declarar que não conseguiu verificar o fato, o fluxo tenta o site oficial automaticamente, sem pedir permissão ao cliente. Ataques e assuntos fora do escopo continuam bloqueados. Textos cadastrados manualmente são atribuídos à base interna; não são certificados como informações oficiais. Consulte `docs/POLITICA_ATENDIMENTO.md` para as limitações e os testes dessa política.

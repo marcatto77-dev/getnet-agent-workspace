@@ -22,6 +22,22 @@ def retrieve(query: str, provider, limit: int = 5):
     # Exact vector scan is adequate for the bounded initial corpus. Add HNSW after measurement.
     with connection(vector=True) as conn:
         catalog = []
+        lexical = []
+        terms = lexical_terms(query)
+        if terms:
+            lexical = conn.execute(
+                "SELECT c.id,c.content,d.title,d.source,d.origin,d.updated_at, "
+                "c.embedding <=> %s::vector AS distance FROM chunks c "
+                "JOIN rag_documents d ON c.rag_document_id=d.id "
+                "WHERE d.status_embedding='indexed' AND d.review_required=false "
+                "AND to_tsvector('portuguese',d.title || ' ' || c.content) "
+                "@@ to_tsquery('portuguese',%s) "
+                "ORDER BY ts_rank_cd("
+                "setweight(to_tsvector('portuguese',d.title),'A') || "
+                "setweight(to_tsvector('portuguese',c.content),'B'),"
+                "to_tsquery('portuguese',%s)) DESC, distance LIMIT %s",
+                (str(vector), terms, terms, min(2, limit)),
+            ).fetchall()
         if catalog_question(query):
             catalog = conn.execute(
                 "SELECT c.id,c.content,d.title,d.source,d.origin,d.updated_at, "
@@ -44,12 +60,12 @@ def retrieve(query: str, provider, limit: int = 5):
     selected = []
     seen = set()
     seen_sources = set()
-    for row in [*catalog, *rows]:
+    for row in [*catalog, *lexical, *rows]:
         if row["id"] in seen or len(selected) >= limit:
             continue
         if catalog and row["source"] in seen_sources:
             continue
-        if row not in catalog and float(row["distance"]) > settings().rag_max_distance:
+        if row not in catalog and row not in lexical and float(row["distance"]) > settings().rag_max_distance:
             continue
         selected.append(row)
         seen.add(row["id"])
@@ -67,3 +83,41 @@ def retrieve(query: str, provider, limit: int = 5):
         }
         for i, row in enumerate(selected)
     ]
+
+
+def lexical_terms(query: str) -> str:
+    # OR over meaningful words catches short administrative records missed by
+    # vector similarity. Values stay parameterized, never executable SQL.
+    ignored = {
+        "getnet",
+        "get",
+        "qual",
+        "quais",
+        "onde",
+        "fica",
+        "como",
+        "para",
+        "uma",
+        "por",
+        "com",
+        "dos",
+        "das",
+        "modelo",
+        "modelos",
+        "hoje",
+        "posso",
+        "the",
+        "what",
+        "where",
+        "how",
+        "can",
+        "and",
+        "que",
+        "todos",
+    }
+    words = list(
+        dict.fromkeys(word for word in re.findall(r"[^\W\d_]{3,}", query.casefold()) if word not in ignored)
+    )
+    if re.search(r"\bonde\s+fica\b", query, re.I) and "endereço" not in words:
+        words.append("endereço")
+    return " | ".join(words[:12])
