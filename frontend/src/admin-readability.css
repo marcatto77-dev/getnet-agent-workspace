@@ -93,6 +93,20 @@
 .admin-shell .logs-tabs{gap:8px;padding:8px 32px 0;flex-wrap:wrap}
 .admin-shell .logs-tabs button{font-size:15px;font-weight:600;min-height:48px;padding:12px 16px;color:#56647a}
 .admin-shell .logs-tabs button.active{color:#bb0036;background:#fff5f7;border-radius:8px 8px 0 0}
+.admin-shell .guardrail-event-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.admin-shell .guardrail-event{min-width:0;padding:20px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px #24314808}
+.admin-shell .guardrail-event-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.admin-shell .guardrail-event-heading>div{min-width:0}
+.admin-shell .guardrail-event time{font-size:13px;color:#58677d;font-variant-numeric:tabular-nums}
+.admin-shell .guardrail-event h3{margin:5px 0 0;font:700 17px/1.45 Manrope,sans-serif;color:#243148;overflow-wrap:break-word}
+.admin-shell .guardrail-event-heading .pill{flex-shrink:0;font-size:13px;color:#9e1033;background:#fff0f4}
+.admin-shell .guardrail-event-meta{display:flex;flex-wrap:wrap;gap:12px 28px;margin:18px 0}
+.admin-shell .guardrail-event-meta div{min-width:110px}
+.admin-shell .guardrail-event-meta dt,.admin-shell .guardrail-event-sample>span{font-size:12px;font-weight:700;color:#637086;text-transform:uppercase;letter-spacing:.4px}
+.admin-shell .guardrail-event-meta dd{margin:3px 0 0;font-size:15px;color:#243148}
+.admin-shell .guardrail-event-sample{min-width:0;padding:14px;border:1px solid #e6eaf0;border-radius:10px;background:#f6f8fb}
+.admin-shell .guardrail-event-sample p{margin:7px 0 0;font-size:14px;line-height:1.6;color:#34425a;white-space:pre-wrap;overflow-wrap:anywhere}
+.admin-shell .guardrail-empty{grid-column:1/-1;padding:28px;background:#fff;border:1px solid var(--line);border-radius:14px;color:#58677d}
 .admin-shell .log-filters{flex-wrap:wrap;overflow:visible;padding:18px;gap:12px;align-items:flex-end}
 .admin-shell .log-filters label{font-size:13px;color:#536177;flex:1 1 220px;min-width:0}
 .admin-shell .log-filters input{font-size:15px;min-height:44px;width:100%;padding:10px;margin-top:6px;color:#243148}
